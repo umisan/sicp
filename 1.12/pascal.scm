@@ -1,0 +1,13 @@
+(define (pascal i j)
+  (cond ((= i 0) 1)
+        ((or (= j 1) (= j i)) 1)
+        (else (+ (pascal (- i 1) (- j 1)) (pascal (- i  1) j)))))
+
+(print (pascal 1 1))
+(print (pascal 2 1))
+(print (pascal 2 2))
+(print (pascal 3 1))
+(print (pascal 3 2))
+(print (pascal 3 3))
+(print (pascal 6 3))
+(print (pascal 7 5))
