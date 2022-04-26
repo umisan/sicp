@@ -1,0 +1,22 @@
+(define (f n)
+  (cond ((< n 3) n)
+        (else (+ (f (- n 1)) (* 2 (f (- n 2))) (* 3 (f (- n 3)))))))
+
+(print (f 1))
+(print (f 2))
+(print (f 3))
+(print (f 4))
+(print (f 5))
+
+(define (f2 n) 
+  (define (f-iter a b c count)
+    (cond ((< n 3) n)
+          ((= count 0 ) a)
+          (else (f-iter (+ a (* 2 b) (* 3 c) ) a b (- count 1)))))
+  (f-iter 2 1 0 (- n 2)))
+
+(print (f2 1))
+(print (f2 2))
+(print (f2 3))
+(print (f2 4))
+(print (f2 5))
