@@ -1,0 +1,10 @@
+(define (for-each f l)
+  (define (iter sl)
+    (f (car sl))
+    (if (null? (cdr sl))
+        ()
+        (iter (cdr sl))))
+  (iter l))
+
+(for-each (lambda (x) (display x) (newline))
+          (list 57 321 88))
