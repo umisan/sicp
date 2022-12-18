@@ -1,0 +1,51 @@
+(define (make-tree key left right value)
+  (list key left right value))
+(define (get-key tree) (car tree))
+(define (get-left tree) (cadr tree))
+(define (get-right tree) (caddr tree))
+(define (get-value tree) (cadddr tree))
+(define (set-left! tree new-left) (set-car! (cdr tree) new-left))
+(define (set-right! tree new-right) (set-car! (cddr tree) new-right))
+(define (set-value! tree new-value) (set-car! (cdddr tree) new-right))
+(define (lookup-tree tree key)
+  (cond ((null? tree) #f)
+        ((= (get-key tree) key) (get-value tree))
+        ((> (get-key tree) key) (lookup-tree (get-left tree) key))
+        (else (lookup-tree (get-right tree) key))))
+(define (insert-tree! tree key value)
+  (cond ((null? tree) (make-tree key '() '() value))
+        ((= (get-key tree) key) (set-value! tree value))
+        ((and (> (get-key tree) key) (null? (get-left tree))) (set-left! tree (make-tree key '() '() value)))
+        ((and (< (get-key tree) key) (null? (get-right tree))) (set-right! tree (make-tree key '() '() value)))
+        ((> (get-key tree) key) (insert-tree! (get-left tree) key value))
+        (else (insert-tree! (get-right tree) key value))))
+
+(define (make-table) (cons 'table '()))
+(define (lookup table key-1 key-2)
+  (let ((sub-tree (lookup-tree (cdr table) key-1)))
+    (if sub-tree
+        (let ((record (lookup-tree sub-tree key-2)))
+          (if record
+              record
+              #f))
+        #f)))
+(define (insert-table! table key-1 key-2 value) 
+  (let ((sub-tree (lookup-tree (cdr table) key-1)))
+    (if sub-tree
+        (let ((record (lookup-tree sub-tree key-2)))
+          (if record
+              (set-value! record value)
+              (insert-tree! sub-tree key-2 value)))
+        (if (null? (cdr table))
+            (set-cdr! table (insert-tree! (cdr table) key-1 (make-tree key-2 '() '() value)))
+            (insert-tree! (cdr table) key-1 (make-tree key-2 '() '() value))))))
+
+
+(define table (make-table))
+(insert-table! table 1 1 10)
+(insert-table! table 1 2 30)
+(insert-table! table 2 3 20)
+(insert-table! table 0 1 40)
+(print (lookup table 1 1))
+(print (lookup table 0 1))
+

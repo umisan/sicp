@@ -1,0 +1,45 @@
+(define (assoc key records)
+  (cond ((null? records) #f)
+        ((eq? key (caar records)) (car records))
+        (else (assoc key (cdr records)))))
+
+(define (construct-table key-list value)
+  (if (null? key-list)
+      value
+      (list (car key-list) (construct-table (cdr key-list) value))))
+
+(print (construct-table '(a b c) 10))
+
+(define (make-table)
+  (let ((local-table (list '*table*)))
+    (define (lookup-subtable key-list table)
+      (if (null? key-list)
+          (cadr table)
+          (let ((subtable (assoc (car key-list) (cdr table))))
+            (if subtable
+                (lookup-subtable (cdr key-list) subtable)
+                #f))))
+    (define (lookup key-list)
+      (lookup-subtable key-list local-table))
+    (define (insert-subtable! key-list value table)
+      (if (null? key-list)
+          (set-cdr! table value)
+          (let ((subtable (assoc (car key-list) (cdr table))))
+            (if subtable
+                (insert-subtable! (cdr key-list) value subtable)
+                (set-cdr! table (cons (construct-table key-list value) (cdr table)))))))
+    (define (insert! key-list value)
+      (insert-subtable! key-list value local-table)
+      'ok)
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            (else (error "Unkonwn operation -- TABLE" m))))
+    dispatch))
+
+
+(define table (make-table))
+(print ((table 'insert-proc!) (list 'a 'b 'c) 20))
+(print ((table 'insert-proc!) (list 'a 'b 'd) 30))
+(print ((table 'lookup-proc) (list 'a 'b 'c)))
+(print ((table 'lookup-proc) (list 'a 'b 'd)))
