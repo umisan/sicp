@@ -1,0 +1,81 @@
+(define (tagged-list? exp tag)
+  (if (pair? exp)
+      (eq? (car exp) tag)
+      false))
+
+(define (if? exp)
+  (tagged-list? exp 'if))
+
+(define (if-predicate exp) (cadr exp))
+
+(define (if-consequent exp) (caddr exp))
+
+(define (if-alternative exp)
+  (if (not (null? (cdddr exp)))
+      (cadddr exp)
+      'false))
+
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequent alternative))
+
+(define (or? exp)
+  (tagged-list? exp 'or))
+
+(define (or-conditions exp)
+  (cdr exp))
+
+(define (eval-or exp env)
+  (define (itr conds env)
+    (cond ((null? conds) #t)
+          ((eval (car conds) env) #t)
+          (else (itr (cdr conds) env))))
+  (itr (or-conditions exp) env))
+
+(define (or->if exp)
+  (define (conditions->if condition alternatives)
+    (if (null? alternative)
+        (make-if condition #t #f)
+        (make-if condition #t (conditions->if (car alternatives) (cdr alternatives)))))
+  (conditions->if (car (or-conditions exp)) (cdr (or-conditions exp))))
+
+(define (and? exp)
+  (tagged-list? exp 'and))
+
+(define (and-conditions exp)
+  (cdr exp))
+
+(define (eval-and exp env)
+  (define (itr conds env)
+    (cond ((null? conds) #t)
+          ((not (eval (car conds) env)) #f)
+          (else (itr (cdr conds) env))))
+  (itr (and-conditions exp) env))
+
+(define (and->if exp)
+  (define (conditions->if condition alternatives)
+    (if (null? alternative)
+        (make-if condition #t #f)
+        (make-if condition (conditions->if (car alternatives) (cdr alternatives)) #f)))
+  (conditions->if (car (and-conditions exp)) (cdr (and-conditions exp))))
+
+(define (eval exp env)
+  (cond ((self-evaluating? exp) exp)
+        ((variable? exp) (lookup-variable-value exp env))
+        ((quoted? exp) (text-of-quotation exp))
+        ((assignment? exp) (eval-assignment exp env))
+        ((definition? exp) (eval-definition exp env))
+        ((if? exp) (eval-if exp env))
+        ((lambda? exp)
+         (make-procedure (lambda-paramenters exp)
+                         (lambda-body exp)
+                         env))
+        ((begin? exp)
+         (eval-sequence (begin-actions exp) env))
+        ((cond? exp) (eval (cond->if exp) env))
+        ((or? exp) (eval-or exp env))
+        ((and? exp) (eval-and exp env))
+        ((application? exp)
+         (apply (eval (operator exp) env)
+                (list-of-values (operands exp) env)))
+        (else
+          (error "Unknown expression type -- EVAL" exp))))
